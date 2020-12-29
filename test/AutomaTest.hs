@@ -3,10 +3,10 @@ module Main (main) where
 import Automaton
 import Data.List
 
-s0 = S "s0" (False, False)
-s1 = S "s1" (False, True)
-s2 = S "s2" (True, False)
-s3 = S "s3" (True, True)
+s0 = S 0 (False, False)
+s1 = S 1 (False, True)
+s2 = S 2 (True, False)
+s3 = S 3 (True, True)
 
 t0 = T s0 'a' s1
 t1 = T s0 'b' s1
