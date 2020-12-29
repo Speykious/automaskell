@@ -1,4 +1,4 @@
-module Automaon (someFunc) where
+module Automaton (someFunc) where
 
 someFunc :: IO ()
 someFunc = putStrLn "Why hello there"
