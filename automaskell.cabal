@@ -26,3 +26,4 @@ test-suite automaskell-test
   hs-source-dirs:      test
   main-is:             AutomaTest.hs
   build-depends:       base ^>=4.14.1.0
+                     , automaskell
