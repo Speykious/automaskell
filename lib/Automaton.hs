@@ -1,7 +1,8 @@
 module Automaton where
 
 import DotShow
-import Data.Set (Set)
+import Data.Set (Set, fromList, empty)
+import Data.List (foldl')
 
 data S a = S a (Bool, Bool)      deriving (Eq, Ord) -- State
 data T a = T (S a) Char (S a)    deriving (Eq, Ord) -- Transition
@@ -28,7 +29,7 @@ instance (Show a, Show b) => Show (FSM a b) where
   show (FSM l st) = undefined
 
 instance Show a => DotShow (S a) where
-  dotShow (S a _) = "S" ++ show a
+  dotShow    (S a _)      = "S" ++ show a
   dotDeclare (S a (i, f)) = Just $ "S" ++ show a
                           ++ case params of
                             [a, b] -> " [" ++ a ++ "," ++ b ++ "];"
@@ -41,5 +42,8 @@ instance Show a => DotShow (T a) where
   dotShow (T sa c sb) = dotShow sa ++ " -> " ++ dotShow sb
                       ++ " [label=" ++ [c] ++ "];"
 
-states :: FSM a b -> Set (S a)
-states = undefined
+states :: Ord a => FSM a b -> Set (S a)
+states (FSM l st) = foldl' (\acc (T sa _ sb) -> acc <> fromList [sa, sb]) empty st
+
+fsm :: (Ord a) => b -> [T a] -> FSM a b
+fsm b ts = FSM b $ fromList ts
