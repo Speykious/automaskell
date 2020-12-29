@@ -1,7 +1,10 @@
 module Automaton where
 
+import Data.Set
+
 data S a = S a (Bool, Bool)   deriving (Eq, Ord) -- State
 data T a = T (S a) Char (S a) deriving (Eq, Ord) -- Transition
+--data FSM a =
 
 clr = "\x1b[0m"
 bld = "\x1b[1m"
