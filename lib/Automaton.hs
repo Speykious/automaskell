@@ -24,6 +24,9 @@ instance Show a => Show (T a) where
                    ++ yel ++ ">-" ++ [c] ++ "->" ++ clr
                    ++ " " ++ show sb
 
+instance (Show a, Show b) => Show (FSM a b) where
+  show (FSM l st) = undefined
+
 instance Show a => DotShow (S a) where
   dotShow (S a _) = "S" ++ show a
   dotDeclare (S a (i, f)) = Just $ "S" ++ show a
@@ -37,3 +40,6 @@ instance Show a => DotShow (S a) where
 instance Show a => DotShow (T a) where
   dotShow (T sa c sb) = dotShow sa ++ " -> " ++ dotShow sb
                       ++ " [label=" ++ [c] ++ "];"
+
+states :: FSM a b -> Set (S a)
+states = undefined
