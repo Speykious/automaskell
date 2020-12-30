@@ -21,5 +21,5 @@ t2 = T s1 'a' s0
 t3 = T s1 'b' s2
 t4 = T s2 'a' s0
 
-automaton = fsmFromList "A" [t0, t1, t2, t3, t4]
-deter = fsmFromList "A" [t0, td, t1, t2, t3, t4]
+automaton = fsmFromList "automaton" [t0, t1, t2, t3, t4]
+deter = fsmFromList "deter" [t0, td, t1, t2, t3, t4]
