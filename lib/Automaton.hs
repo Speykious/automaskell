@@ -31,6 +31,7 @@ instance (Ord a, Show a) => DotShow (FSM a) where
     where unwrap (Just a) = a
           unwrap Nothing = error "Trying to unwrap Nothing"
 
+  dotPDF m = dotShowPDF (label m) m
 
 
 fsmTransFromState :: Eq a => S a -> FSM a -> Set (T a)

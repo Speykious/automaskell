@@ -7,6 +7,9 @@ class DotShow a where
   dotDeclare :: a -> Maybe String
   dotDeclare = const Nothing
   
+  dotPDF :: a -> IO ()
+  dotPDF = dotShowPDF "temp"
+
   dotShowPDF :: String -> a -> IO ()
   dotShowPDF name a = do
       writeFile dotName (dotShow a)
@@ -14,3 +17,5 @@ class DotShow a where
       callCommand $ "xdg-open " ++ pdfName
     where dotName = name ++ ".dot"
           pdfName = name ++ ".pdf"
+  
+  {-# MINIMAL dotShow #-}
