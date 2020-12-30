@@ -69,7 +69,7 @@ instance (Ord a, Show a) => DotShow (FSM a) where
 
 
 statesFromTrans :: Ord a => Set (T a) -> Set (S a)
-statesFromTrans = mapSet $ \(T sa _ sb) -> fromList [sa, sb]
+statesFromTrans = (<>>=> \(T sa _ sb) -> fromList [sa, sb])
 
 states :: Ord a => FSM a -> Set (S a)
 states = statesFromTrans . transitions
