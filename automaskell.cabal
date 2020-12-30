@@ -19,6 +19,7 @@ library
                      , State
   build-depends:       base ^>=4.14.1.0
                      , containers
+                     , process
   hs-source-dirs:      lib
   default-language:    Haskell2010
 
