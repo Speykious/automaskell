@@ -21,17 +21,5 @@ t2 = T s1 'a' s0
 t3 = T s1 'b' s2
 t4 = T s2 'a' s0
 
-ts = [t0, td, t1, t2, t3, t4]
-automaton = fsmFromList "A" ts
-
-
-somePrints :: IO ()
-somePrints = do
-  putStr $ bld ++ "States:" ++ clr ++ " "
-  print [s0, s1, s2, s3]
-  putStrLn $ bld ++ "Transitions:" ++ clr
-  putStrLn $ unlines $ ("  " ++) . show <$> ts
-  putStrLn ""
-  printSetLn $ fromList (t0:ts)
-  putStrLn ""
-  printSet $ fsmStates automaton
+automaton = fsmFromList "A" [t0, t1, t2, t3, t4]
+deter = fsmFromList "A" [t0, td, t1, t2, t3, t4]
