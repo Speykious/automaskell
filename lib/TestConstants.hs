@@ -13,12 +13,13 @@ s2 = S 2 (True, False)
 s3 = S 3 (True, True)
 
 t0 = T s0 'a' s1
+td = T s0 'a' s2
 t1 = T s0 'b' s1
 t2 = T s1 'a' s0
 t3 = T s1 'b' s2
 t4 = T s2 'a' s0
 
-ts = [t0, t1, t2, t3, t4]
+ts = [t0, td, t1, t2, t3, t4]
 automaton = fsm "A" ts
 
 
