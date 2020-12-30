@@ -30,7 +30,7 @@ instance Show a => Show (T a) where
 instance (Ord a, Show a) => Show (FSM a) where
   show (FSM l st) = bld ++ "Automaton " ++ show l ++ clr ++ ":\n"
                   ++ bld ++ "  States" ++ clr ++ ":\n    "
-                  ++ indentedSet (statesFromTransitions st) ++ "\n"
+                  ++ indentedSet (statesFromTrans st) ++ "\n"
                   ++ bld ++ "  Transitions" ++ clr ++ ":\n    "
                   ++ indentedSet st
     where indentedSet :: (Show a) => Set a -> String
@@ -55,26 +55,32 @@ instance (Ord a, Show a) => DotShow (FSM a) where
   dotShow (FSM l st) = "digraph " ++ l ++ " {\n"
                      ++ "  graph [rotate=90];\n  rankdir=LR;\n"
                      ++ unlines (("  " ++) . dotShow <$> elems st)
-                     ++ unlines (("  " ++) . unwrap . dotDeclare <$> elems (statesFromTransitions st))
+                     ++ unlines (("  " ++) . unwrap . dotDeclare <$> elems (statesFromTrans st))
                      ++ "}"
     where unwrap (Just a) = a
           unwrap Nothing = error "Trying to unwrap Nothing"
 
-statesFromTransitions :: Ord a => Set (T a) -> Set (S a)
-statesFromTransitions = mapSet $ \(T sa _ sb) -> fromList [sa, sb]
+statesFromTrans :: Ord a => Set (T a) -> Set (S a)
+statesFromTrans = mapSet $ \(T sa _ sb) -> fromList [sa, sb]
                         --foldl' (\acc (T sa _ sb) -> acc <> fromList [sa, sb]) empty
 
 states :: Ord a => FSM a -> Set (S a)
-states (FSM l st) = statesFromTransitions st
+states (FSM l st) = statesFromTrans st
 
 fsmFromList :: Ord a => String -> [T a] -> FSM a
 fsmFromList l ts = FSM l $ fromList ts
 
-transitionsFromState :: Eq a => S a -> Set (T a) -> Set (T a)
-transitionsFromState s = DS.filter (\(T sa _ _) -> s == sa)
+transFromState :: Eq a => S a -> Set (T a) -> Set (T a)
+transFromState s = DS.filter (\(T sa _ _) -> s == sa)
 
-fsmTransitionsFromState :: Eq a => S a -> FSM a -> Set (T a)
-fsmTransitionsFromState s (FSM _ st) = transitionsFromState s st
+transWithLabel :: Char -> Set (T a) -> Set (T a)
+transWithLabel c = DS.filter (\(T _ c' _) -> c == c')
 
-succStates :: FSM a -> S a -> Char -> Set (S a)
-succStates (FSM l st) s c = undefined
+endingStates :: Ord a => Set (T a) -> Set (S a)
+endingStates = DS.map (\(T _ _ sb) -> sb)
+
+fsmTransFromState :: Eq a => S a -> FSM a -> Set (T a)
+fsmTransFromState s (FSM _ st) = transFromState s st
+
+succStates :: (Eq a, Ord a) => FSM a -> Char -> S a -> Set (S a)
+succStates (FSM l st) c s = endingStates $ transWithLabel c $ transFromState s st
