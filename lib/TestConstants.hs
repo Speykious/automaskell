@@ -20,7 +20,7 @@ t3 = T s1 'b' s2
 t4 = T s2 'a' s0
 
 ts = [t0, td, t1, t2, t3, t4]
-automaton = fsm "A" ts
+automaton = fsmFromList "A" ts
 
 
 somePrints :: IO ()
