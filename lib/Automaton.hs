@@ -66,9 +66,12 @@ fsmExec m = isFinalSet . exec mis
         exec ss (c:cs) = exec (succStates m c ss) cs
 
 
+
 isComplete :: (Eq a, Ord a) => String -> FSM a -> Bool
 isComplete alpha m = and $ DS.map (notElem empty . allSuccState m alpha) (fsmStates m)
 
+symbolsFromStates :: (Eq a, Ord a) => FSM a -> [String]
+symbolsFromStates m = (symbol <$>) . elems . (`fsmTransFromState` m) <$> elems (fsmStates m)
+
 isDeterministic :: (Eq a, Ord a) => FSM a -> Bool
-isDeterministic m = and $ not . hasDuplicates . (symbol <$>) . elems . (`fsmTransFromState` m)
-                        <$> elems (fsmStates m)
+isDeterministic = not . any hasDuplicates . symbolsFromStates
