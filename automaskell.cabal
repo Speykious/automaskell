@@ -15,7 +15,7 @@ category:            Math
 -- extra-source-files:  CHANGELOG.md
 
 library
-  exposed-modules:     TestConstants, Automaton, DotShow
+  exposed-modules:     TestConstants, Automaton, DotShow, Helpers
   build-depends:       base ^>=4.14.1.0
                      , containers
   hs-source-dirs:      lib
