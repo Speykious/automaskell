@@ -6,9 +6,10 @@ import Data.Set (Set, fromList, empty, elems)
 import qualified Data.Set as DS
 import Data.List (foldl', lines, intercalate)
 
-data S a   = S a (Bool, Bool)       deriving (Eq, Ord) -- State
-data T a   = T (S a) Char (S a)     deriving (Eq, Ord) -- Transition
-data FSM a = FSM String (Set (T a)) deriving (Eq, Ord) -- Finite State Machine
+data S a   = S a (Bool, Bool)                 deriving (Eq, Ord) -- State
+data T a   = T (S a) Char (S a)               deriving (Eq, Ord) -- Transition
+data FSM a = FSM { label :: String
+                 , transitions :: Set (T a) } deriving (Eq, Ord) -- Finite State Machine
 
 clr = "\x1b[0m"
 bld = "\x1b[1m"
@@ -16,6 +17,8 @@ dim = "\x1b[2m"
 red = "\x1b[31m"
 grn = "\x1b[32m"
 yel = "\x1b[33m"
+
+
 
 instance Show a => Show (S a) where
   show (S a (i, f)) = dim ++ "S" ++ clr ++ show a
@@ -35,6 +38,7 @@ instance (Ord a, Show a) => Show (FSM a) where
                   ++ indentedSet st
     where indentedSet :: (Show a) => Set a -> String
           indentedSet = intercalate "\n    " . lines . showSetLn
+
 
 
 instance Show a => DotShow (S a) where
@@ -60,9 +64,10 @@ instance (Ord a, Show a) => DotShow (FSM a) where
     where unwrap (Just a) = a
           unwrap Nothing = error "Trying to unwrap Nothing"
 
+
+
 statesFromTrans :: Ord a => Set (T a) -> Set (S a)
 statesFromTrans = mapSet $ \(T sa _ sb) -> fromList [sa, sb]
-                        --foldl' (\acc (T sa _ sb) -> acc <> fromList [sa, sb]) empty
 
 states :: Ord a => FSM a -> Set (S a)
 states (FSM l st) = statesFromTrans st
