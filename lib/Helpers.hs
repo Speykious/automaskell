@@ -5,6 +5,13 @@ import Data.Set (Set, null, empty, singleton)
 import qualified Data.Set as DS
 import Data.List (foldl', intercalate)
 
+clr = "\x1b[0m"
+bld = "\x1b[1m"
+dim = "\x1b[2m"
+red = "\x1b[31m"
+grn = "\x1b[32m"
+yel = "\x1b[33m"
+
 showSetg :: (Show a) => String -> Set a -> String
 showSetg sep s
   | null s    = "{}"

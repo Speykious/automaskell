@@ -1,6 +1,8 @@
 module TestConstants where
 
 import Prelude hiding (null)
+import State
+import Transition
 import Automaton
 import DotShow
 import Helpers
@@ -32,4 +34,4 @@ somePrints = do
   putStrLn ""
   printSetLn $ fromList (t0:ts)
   putStrLn ""
-  printSet $ states automaton
+  printSet $ fsmStates automaton
