@@ -7,7 +7,9 @@ import qualified Data.Set as DS
 import Data.List (foldl', lines, intercalate)
 
 data S a   = S a (Bool, Bool)                 deriving (Eq, Ord) -- State
-data T a   = T (S a) Char (S a)               deriving (Eq, Ord) -- Transition
+data T a   = T { transStart :: S a
+               , symbol :: Char
+               , transEnd :: S a }            deriving (Eq, Ord) -- Transition
 data FSM a = FSM { label :: String
                  , transitions :: Set (T a) } deriving (Eq, Ord) -- Finite State Machine
 
@@ -70,22 +72,22 @@ statesFromTrans :: Ord a => Set (T a) -> Set (S a)
 statesFromTrans = mapSet $ \(T sa _ sb) -> fromList [sa, sb]
 
 states :: Ord a => FSM a -> Set (S a)
-states (FSM l st) = statesFromTrans st
+states = statesFromTrans . transitions
 
 fsmFromList :: Ord a => String -> [T a] -> FSM a
-fsmFromList l ts = FSM l $ fromList ts
+fsmFromList l = FSM l . fromList
 
 transFromState :: Eq a => S a -> Set (T a) -> Set (T a)
-transFromState s = DS.filter (\(T sa _ _) -> s == sa)
+transFromState s = DS.filter $ (== s) . transStart
 
 transWithLabel :: Char -> Set (T a) -> Set (T a)
-transWithLabel c = DS.filter (\(T _ c' _) -> c == c')
+transWithLabel c = DS.filter $ (== c) . symbol
 
 endingStates :: Ord a => Set (T a) -> Set (S a)
-endingStates = DS.map (\(T _ _ sb) -> sb)
+endingStates = DS.map transEnd
 
 fsmTransFromState :: Eq a => S a -> FSM a -> Set (T a)
-fsmTransFromState s (FSM _ st) = transFromState s st
+fsmTransFromState s = transFromState s . transitions
 
 succStates :: (Eq a, Ord a) => FSM a -> Char -> S a -> Set (S a)
-succStates (FSM l st) c s = endingStates $ transWithLabel c $ transFromState s st
+succStates (FSM _ st) c s = endingStates $ transWithLabel c $ transFromState s st
