@@ -14,7 +14,7 @@ data FSM a = FSM { label :: String
 
 
 instance (Ord a, Show a) => Show (FSM a) where
-  show (FSM l st) = bld ++ "Automaton " ++ show l ++ clr ++ ":\n"
+  show (FSM l st) = bld ++ "Automaton " ++ l ++ clr ++ ":\n"
                   ++ bld ++ "  States" ++ clr ++ ":\n    "
                   ++ indentedSet (statesFromTrans st) ++ "\n"
                   ++ bld ++ "  Transitions" ++ clr ++ ":\n    "
