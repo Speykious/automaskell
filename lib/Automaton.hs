@@ -2,7 +2,8 @@ module Automaton where
 
 import DotShow
 import Helpers
-import Data.Set (Set, fromList, empty)
+import Data.Set (Set, fromList, empty, elems)
+import qualified Data.Set as DS
 import Data.List (foldl', lines, intercalate)
 
 data S a   = S a (Bool, Bool)       deriving (Eq, Ord) -- State
@@ -50,6 +51,15 @@ instance Show a => DotShow (T a) where
   dotShow (T sa c sb) = dotShow sa ++ " -> " ++ dotShow sb
                       ++ " [label=" ++ [c] ++ "];"
 
+instance (Ord a, Show a) => DotShow (FSM a) where
+  dotShow (FSM l st) = "digraph " ++ l ++ " {\n"
+                     ++ "  graph [rotate=90];\n  rankdir=LR;\n"
+                     ++ unlines (("  " ++) . dotShow <$> elems st)
+                     ++ unlines (("  " ++) . unwrap . dotDeclare <$> elems (statesFromTransitions st))
+                     ++ "}"
+    where unwrap (Just a) = a
+          unwrap Nothing = error "Trying to unwrap Nothing"
+
 statesFromTransitions :: Ord a => Set (T a) -> Set (S a)
 statesFromTransitions = mapSet $ \(T sa _ sb) -> fromList [sa, sb]
                         --foldl' (\acc (T sa _ sb) -> acc <> fromList [sa, sb]) empty
@@ -57,11 +67,14 @@ statesFromTransitions = mapSet $ \(T sa _ sb) -> fromList [sa, sb]
 states :: Ord a => FSM a -> Set (S a)
 states (FSM l st) = statesFromTransitions st
 
-fsm :: (Ord a) => String -> [T a] -> FSM a
-fsm l ts = FSM l $ fromList ts
+fsmFromList :: Ord a => String -> [T a] -> FSM a
+fsmFromList l ts = FSM l $ fromList ts
 
-transitionsFromState :: FSM a -> S a -> Set (T a)
-transitionsFromState = undefined
+transitionsFromState :: Eq a => S a -> Set (T a) -> Set (T a)
+transitionsFromState s = DS.filter (\(T sa _ _) -> s == sa)
+
+fsmTransitionsFromState :: Eq a => S a -> FSM a -> Set (T a)
+fsmTransitionsFromState s (FSM _ st) = transitionsFromState s st
 
 succStates :: FSM a -> S a -> Char -> Set (S a)
 succStates (FSM l st) s c = undefined
