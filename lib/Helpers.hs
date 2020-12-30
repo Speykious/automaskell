@@ -32,3 +32,6 @@ m <>>=> f = foldl' (\acc a -> acc <> f a) mempty m
 
 hasDuplicates :: (Eq a, Ord a) => [a] -> Bool
 hasDuplicates xs = DS.size (fromList xs) /= length xs
+
+alphaComp :: (Foldable t, Eq a) => t a -> [a] -> [a]
+alphaComp s = filter $ not . (`elem` s)
