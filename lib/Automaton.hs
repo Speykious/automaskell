@@ -51,6 +51,9 @@ fsmFinalStates = finalStates . fsmStates
 succState :: (Eq a, Ord a) => FSM a -> Char -> S a -> Set (S a)
 succState (FSM _ st) c s = endingStates $ transWithLabel c $ transFromState s st
 
+allSuccState :: Ord a => FSM a -> String -> S a -> [Set (S a)]
+allSuccState m alpha s = (\c -> succState m c s) <$> alpha
+
 succStates :: (Eq a, Ord a) => FSM a -> Char -> Set (S a) -> Set (S a)
 succStates m c = (<>>=> succState m c)
 
@@ -60,3 +63,12 @@ fsmExec m = isFinalSet . exec mis
         exec ss _ | DS.null ss = ss
         exec ss []     = ss
         exec ss (c:cs) = exec (succStates m c ss) cs
+
+
+
+isComplete :: (Eq a, Ord a) => String -> FSM a -> Bool
+isComplete alpha m = and $ DS.map (notElem empty . allSuccState m alpha) (fsmStates m)
+
+isDeterministic :: (Eq a, Ord a) => FSM a -> Bool
+isDeterministic m = and $ DS.map ((<= 1) . DS.size . (`fsmTransFromState` m)) (fsmStates m)
+
