@@ -1,7 +1,6 @@
 module Helpers where
 
-import Prelude hiding (null)
-import Data.Set (Set, null, empty, singleton)
+import Data.Set (Set, empty, singleton)
 import qualified Data.Set as DS
 import Data.List (foldl', intercalate)
 
@@ -14,7 +13,7 @@ yel = "\x1b[33m"
 
 showSetg :: (Show a) => String -> Set a -> String
 showSetg sep s
-  | null s    = "{}"
+  | DS.null s    = "{}"
   | otherwise = "{ " ++ intercalate sep (foldl' (\acc a -> show a : acc) [] s) ++ " }"
 
 showSet :: (Show a) => Set a -> String
