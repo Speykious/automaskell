@@ -5,8 +5,8 @@ import Helpers
 import Data.Set (Set, fromList, empty)
 import Data.List (foldl', lines, intercalate)
 
-data S a = S a (Bool, Bool)      deriving (Eq, Ord) -- State
-data T a = T (S a) Char (S a)    deriving (Eq, Ord) -- Transition
+data S a = S a (Bool, Bool)         deriving (Eq, Ord) -- State
+data T a = T (S a) Char (S a)       deriving (Eq, Ord) -- Transition
 data FSM a = FSM String (Set (T a)) deriving (Eq, Ord) -- Finite State Machine
 
 clr = "\x1b[0m"
