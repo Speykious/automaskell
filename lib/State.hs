@@ -25,5 +25,11 @@ instance Show a => DotShow (S a) where
 initialStates :: Set (S a) -> Set (S a)
 initialStates = DS.filter $ \(S _ (i, _)) -> i
 
+isInitialSet :: Set (S a) -> Bool
+isInitialSet = not . DS.null . initialStates
+
 finalStates :: Set (S a) -> Set (S a)
 finalStates = DS.filter $ \(S _ (_, f)) -> f
+
+isFinalSet :: Set (S a) -> Bool
+isFinalSet = not . DS.null . finalStates
