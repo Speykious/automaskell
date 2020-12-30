@@ -42,6 +42,21 @@ fsmFromList l = FSM l . fromList
 fsmStates :: Ord a => FSM a -> Set (S a)
 fsmStates = statesFromTrans . transitions
 
-succStates :: (Eq a, Ord a) => FSM a -> Char -> S a -> Set (S a)
-succStates (FSM _ st) c s = endingStates $ transWithLabel c $ transFromState s st
+fsmInitialStates :: Ord a => FSM a -> Set (S a)
+fsmInitialStates = initialStates . fsmStates
 
+fsmFinalStates :: Ord a => FSM a -> Set (S a)
+fsmFinalStates = finalStates . fsmStates
+
+succState :: (Eq a, Ord a) => FSM a -> Char -> S a -> Set (S a)
+succState (FSM _ st) c s = endingStates $ transWithLabel c $ transFromState s st
+
+succStates :: (Eq a, Ord a) => FSM a -> Char -> Set (S a) -> Set (S a)
+succStates m c = (<>>=> succState m c)
+
+fsmExec :: Ord a => FSM a -> String -> Bool
+fsmExec m = isFinalSet . exec mis
+  where mis = fsmInitialStates m
+        exec ss _ | DS.null ss = ss
+        exec ss []     = ss
+        exec ss (c:cs) = exec (succStates m c ss) cs
