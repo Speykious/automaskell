@@ -1,6 +1,6 @@
 module Helpers where
 
-import Data.Set (Set, empty, singleton)
+import Data.Set (Set, empty, singleton, fromList)
 import qualified Data.Set as DS
 import Data.List (foldl', intercalate)
 
@@ -29,3 +29,6 @@ printSetLn = putStrLn . showSetLn
 
 (<>>=>) :: (Foldable m, Foldable n, Monoid (n b)) => m a -> (a -> n b) -> n b
 m <>>=> f = foldl' (\acc a -> acc <> f a) mempty m
+
+hasDuplicates :: (Eq a, Ord a) => [a] -> Bool
+hasDuplicates xs = DS.size (fromList xs) /= length xs
