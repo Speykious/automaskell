@@ -96,7 +96,7 @@ complete a alpha m = fsmFromList ("complete_" ++ label m)
   where trash = S a (False, False)
         trashitions = (\c -> T trash c trash) <$> alpha
         complitions = symbolsWithStates m
-                    >>= (\(s, ss) -> (\c -> T s c trash) <$> ss) . second (`alphaComp` alpha)
+                    >>= (\(s, cs) -> (\c -> T s c trash) <$> cs) . second (`alphaComp` alpha)
 
 (<|>) :: Ord a => FSM a -> FSM a -> FSM a
 (FSM la sta) <|> (FSM lb stb) = FSM (la ++ "_" ++ lb) (sta <> stb)
@@ -107,15 +107,9 @@ convertToDFA :: Ord a => FSM a -> FSM (Set a)
 convertToDFA m = FSM (label m ++ "_deter")
                $ generateTrans (mergeStates True $ fsmInitialStates m) empty m
   where generateTrans :: Ord a => S (Set a) -> Set (S (Set a)) -> FSM a -> Set (T (Set a))
-        generateTrans currentSetState stack ma =
-              nextActiveStates <>>=> (\nextActiveState ->
-                newTrans <>
-                generateTrans nextActiveState (stack <> nextActiveStates) ma
-              )
-          where currentTransSet = groupBySymbol $ fsmTransFromSetState currentSetState ma
-                newTrans = DS.map (\st -> T currentSetState
-                                            (aFromTrans st)
-                                            (createEndingState False st)
-                                  ) currentTransSet
-                nextStates = endingStates newTrans
-                nextActiveStates = DS.filter (not . (`DS.member` stack)) nextStates
+        generateTrans css stack m = snt <> snnt
+          where csst = groupBySymbol $ fsmTransFromSetState css m
+                snt  = DS.map (\st -> T css (aFromTrans st) (createEndingState False st)) csst
+                sns  = endingStates snt
+                sans = DS.filter (not . (`DS.member` stack)) sns
+                snnt = sans <>>=> (\ans -> generateTrans ans (stack <> sans) m)
