@@ -49,6 +49,9 @@ null = DS.null . innerSet
 size :: Set a -> Int
 size = DS.size . innerSet
 
+member :: Ord a => a -> Set a -> Bool
+member a = DS.member a . innerSet
+
 map :: Ord b => (a -> b) -> Set a -> Set b
 map f (Set a) = Set $ DS.map f a
 
