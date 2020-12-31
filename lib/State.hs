@@ -37,3 +37,6 @@ isFinalSet = not . DS.null . finalStates
 
 mergeStates :: Ord a => Bool -> Set (S a) -> S (Set a)
 mergeStates i ss = S (DS.map stateLabel ss) (i, isFinalSet ss)
+
+labelMember :: Eq a => S a -> Set (S a) -> Bool
+labelMember (S a _) = any $ \(S l _) -> l == a

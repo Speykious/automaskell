@@ -111,5 +111,5 @@ convertToDFA m = FSM (label m ++ "_deter")
           where csst = groupBySymbol $ fsmTransFromSetState css m
                 snt  = (\st -> T css (aFromTrans st) (createEndingState st)) <<$>> csst
                 sns  = endingStates snt
-                sans = DS.filter (not . (`DS.member` stack)) sns
+                sans = DS.filter (not . (`labelMember` stack)) sns
                 snnt = sans <>>=> (\ans -> generateTrans ans (stack <> sans) m)
