@@ -109,7 +109,7 @@ convertToDFA m = FSM (label m ++ "_deter")
   where generateTrans :: Ord a => S (Set a) -> Set (S (Set a)) -> FSM a -> Set (T (Set a))
         generateTrans css stack m = snt <> snnt
           where csst = groupBySymbol $ fsmTransFromSetState css m
-                snt  = DS.map (\st -> T css (aFromTrans st) (createEndingState False st)) csst
+                snt  = (\st -> T css (aFromTrans st) (createEndingState st)) <<$>> csst
                 sns  = endingStates snt
                 sans = DS.filter (not . (`DS.member` stack)) sns
                 snnt = sans <>>=> (\ans -> generateTrans ans (stack <> sans) m)
