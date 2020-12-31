@@ -50,13 +50,13 @@ fsmInitialStates = initialStates . fsmStates
 fsmFinalStates :: Ord a => FSM a -> Set (S a)
 fsmFinalStates = finalStates . fsmStates
 
-succState :: (Eq a, Ord a) => FSM a -> Char -> S a -> Set (S a)
+succState :: Ord a => FSM a -> Char -> S a -> Set (S a)
 succState (FSM _ st) c s = endingStates $ transWithLabel c $ transFromState s st
 
 allSuccState :: Ord a => FSM a -> String -> S a -> [Set (S a)]
 allSuccState m alpha s = (\c -> succState m c s) <$> alpha
 
-succStates :: (Eq a, Ord a) => FSM a -> Char -> Set (S a) -> Set (S a)
+succStates :: Ord a => FSM a -> Char -> Set (S a) -> Set (S a)
 succStates m c = (<>>=> succState m c)
 
 fsmExec :: Ord a => FSM a -> String -> Bool
@@ -68,22 +68,22 @@ fsmExec m = isFinalSet . exec mis
 
 
 
-isComplete :: (Eq a, Ord a) => String -> FSM a -> Bool
+isComplete :: Ord a => String -> FSM a -> Bool
 isComplete alpha m = and $ DS.map (notElem empty . allSuccState m alpha) (fsmStates m)
 
-symbolsWithStates :: (Eq a, Ord a) => FSM a -> [(S a, String)]
+symbolsWithStates :: Ord a => FSM a -> [(S a, String)]
 symbolsWithStates m = (\s -> (s, (symbol <$>) $ elems $ fsmTransFromState s m)) <$> elems (fsmStates m)
 
-symbolsFromStates :: (Eq a, Ord a) => FSM a -> [String]
+symbolsFromStates :: Ord a => FSM a -> [String]
 symbolsFromStates = map snd . symbolsWithStates
 
-fsmAlphaFromState :: (Eq a) => S a -> FSM a -> String
+fsmAlphaFromState :: Eq a => S a -> FSM a -> String
 fsmAlphaFromState s = alphaFromTrans . fsmTransFromState s
 
-isDeterministic :: (Eq a, Ord a) => FSM a -> Bool
+isDeterministic :: Ord a => FSM a -> Bool
 isDeterministic = not . any hasDuplicates . symbolsFromStates
 
-complete :: (Eq a, Ord a) => a -> String -> FSM a -> FSM a
+complete :: Ord a => a -> String -> FSM a -> FSM a
 complete a alpha m = fsmFromList ("complete_" ++ label m)
                    $ trashitions ++ complitions ++ elems (transitions m)
   where trash = S a (False, False)
@@ -91,5 +91,16 @@ complete a alpha m = fsmFromList ("complete_" ++ label m)
         complitions = symbolsWithStates m
                     >>= (\(s, ss) -> (\c -> T s c trash) <$> ss) . second (`alphaComp` alpha)
 
-convertToDFA :: FSM a -> FSM (Set a)
-convertToDFA = undefined
+(<|>) :: Ord a => FSM a -> FSM a -> FSM a
+(FSM la sta) <|> (FSM lb stb) = FSM (la ++ "_" ++ lb) (sta <> stb)
+
+_convertToDFA :: Ord a => Set (S a) -> Set (S (Set a)) -> FSM a -> FSM (Set a)
+_convertToDFA currentStates stack m = undefined
+  where currentSetState = mergeStates False currentStates
+        currentTransSet = groupBySymbol $ currentStates <>>=> (`fsmTransFromState` m)
+        newTrans = DS.map (\st -> T currentSetState
+                                    (aFromTrans st)
+                                    (createEndingState False st)
+                          ) currentTransSet
+        nextStates = endingStates newTrans
+        nextActiveStates = DS.filter (`DS.member` stack) nextStates
