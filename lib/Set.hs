@@ -1,7 +1,8 @@
 module Set where
 
 import qualified Data.Set as DS
-import Data.List (intercalate, foldl')
+import Data.List (intercalate)
+import qualified Data.List as DL
 import Prelude hiding (null, map, filter)
 
 newtype Set a = Set { innerSet :: DS.Set a } deriving (Eq, Ord)
@@ -23,7 +24,7 @@ instance Show a => Show (Set a) where
 showSetg :: Show a => String -> Set a -> String
 showSetg sep (Set s)
   | DS.null s = "{}"
-  | otherwise = "{ " ++ intercalate sep (foldl' (\acc a -> show a : acc) [] s) ++ " }"
+  | otherwise = "{ " ++ intercalate sep (DL.foldl' (\acc a -> show a : acc) [] s) ++ " }"
 
 showSet :: Show a => Set a -> String
 showSet = showSetg ", "
@@ -58,3 +59,5 @@ map f (Set a) = Set $ DS.map f a
 filter :: (a -> Bool) -> Set a -> Set a
 filter f (Set a) = Set $ DS.filter f a
 
+foldl' :: (c -> b -> c) -> c -> Set b -> c
+foldl' f a = DS.foldl' f a . innerSet
