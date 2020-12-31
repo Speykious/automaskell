@@ -7,8 +7,8 @@ import Automaton
 import DotShow
 import Helpers
 import Data.List (foldl', intercalate)
-import Data.Set (fromList)
-import qualified Data.Set as DS
+import Set (fromList)
+import qualified Set as DS
 
 s0 = S 0 (False, False)
 s1 = S 1 (False, True)
