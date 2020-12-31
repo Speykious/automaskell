@@ -17,6 +17,7 @@ library
                      , Helpers
                      , Transition
                      , State
+                     , Set
   build-depends:       base ^>=4.14.1.0
                      , containers
                      , process

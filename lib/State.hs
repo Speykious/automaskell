@@ -2,10 +2,11 @@ module State where
 
 import DotShow
 import Helpers (clr, dim, red, grn)
-import Data.Set (Set)
-import qualified Data.Set as DS
+import Set (Set)
+import qualified Set as DS
 
-data S a = S a (Bool, Bool) deriving (Eq, Ord) -- State
+data S a = S { stateLabel :: a
+             , stateFlags :: (Bool, Bool) } deriving (Eq, Ord) -- State
 
 instance Show a => Show (S a) where
   show (S a (i, f)) = dim ++ "S" ++ clr ++ show a
@@ -13,8 +14,8 @@ instance Show a => Show (S a) where
                     ++ (if f then red ++ "#F" ++ clr else "")
 
 instance Show a => DotShow (S a) where
-  dotShow    (S a _)      = "S" ++ show a
-  dotDeclare (S a (i, f)) = Just $ "S" ++ show a
+  dotShow    (S a _)      = show ("S" ++ show a)
+  dotDeclare (S a (i, f)) = Just $ show ("S" ++ show a)
                           ++ case params of
                             [a, b] -> " [" ++ a ++ "," ++ b ++ "];"
                             [a]    -> " [" ++ a ++ "];"
@@ -33,3 +34,6 @@ finalStates = DS.filter $ \(S _ (_, f)) -> f
 
 isFinalSet :: Set (S a) -> Bool
 isFinalSet = not . DS.null . finalStates
+
+mergeStates :: Ord a => Bool -> Set (S a) -> S (Set a)
+mergeStates i ss = S (DS.map stateLabel ss) (i, isFinalSet ss)

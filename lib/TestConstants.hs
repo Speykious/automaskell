@@ -8,6 +8,7 @@ import DotShow
 import Helpers
 import Data.List (foldl', intercalate)
 import Data.Set (fromList)
+import qualified Data.Set as DS
 
 s0 = S 0 (False, False)
 s1 = S 1 (False, True)
@@ -22,4 +23,5 @@ t3 = T s1 'b' s2
 t4 = T s2 'a' s0
 
 automaton = fsmFromList "automaton" [t0, t1, t2, t3, t4]
+completeAutomaton = complete (-1) "ab" automaton
 deter = fsmFromList "deter" [t0, td, t1, t2, t3, t4]

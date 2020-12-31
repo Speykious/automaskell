@@ -3,8 +3,8 @@ module Transition where
 import DotShow
 import Helpers (clr, yel, (<>>=>))
 import State
-import Data.Set (Set, fromList)
-import qualified Data.Set as DS
+import Set (Set, fromList, elems)
+import qualified Set as DS
 
 data T a = T { transStart :: S a
              , symbol :: Char
@@ -30,3 +30,9 @@ transWithLabel c = DS.filter $ (== c) . symbol
 
 endingStates :: Ord a => Set (T a) -> Set (S a)
 endingStates = DS.map transEnd
+
+alphaFromTrans :: Set (T a) -> String
+alphaFromTrans = elems . DS.map symbol
+
+groupBySymbol :: Ord a => Set (T a) -> Set (Set (T a))
+groupBySymbol st = fromList $ (`transWithLabel` st) <$> alphaFromTrans st

@@ -4,9 +4,10 @@ import DotShow
 import Helpers
 import State
 import Transition
-import Data.Set (Set, fromList, empty, elems)
-import qualified Data.Set as DS
+import Set (Set, fromList, empty, elems)
+import qualified Set as DS
 import Data.List (foldl', lines, intercalate)
+import Data.Bifunctor (second)
 
 data FSM a = FSM { label :: String
                  , transitions :: Set (T a) } deriving (Eq, Ord) -- Finite State Machine
@@ -20,7 +21,7 @@ instance (Ord a, Show a) => Show (FSM a) where
                   ++ bld ++ "  Transitions" ++ clr ++ ":\n    "
                   ++ indentedSet st
     where indentedSet :: (Show a) => Set a -> String
-          indentedSet = intercalate "\n    " . lines . showSetLn
+          indentedSet = intercalate "\n    " . lines . show
 
 instance (Ord a, Show a) => DotShow (FSM a) where
   dotShow (FSM l st) = "digraph " ++ l ++ " {\n"
@@ -70,8 +71,25 @@ fsmExec m = isFinalSet . exec mis
 isComplete :: (Eq a, Ord a) => String -> FSM a -> Bool
 isComplete alpha m = and $ DS.map (notElem empty . allSuccState m alpha) (fsmStates m)
 
+symbolsWithStates :: (Eq a, Ord a) => FSM a -> [(S a, String)]
+symbolsWithStates m = (\s -> (s, (symbol <$>) $ elems $ fsmTransFromState s m)) <$> elems (fsmStates m)
+
 symbolsFromStates :: (Eq a, Ord a) => FSM a -> [String]
-symbolsFromStates m = (symbol <$>) . elems . (`fsmTransFromState` m) <$> elems (fsmStates m)
+symbolsFromStates = map snd . symbolsWithStates
+
+fsmAlphaFromState :: (Eq a) => S a -> FSM a -> String
+fsmAlphaFromState s = alphaFromTrans . fsmTransFromState s
 
 isDeterministic :: (Eq a, Ord a) => FSM a -> Bool
 isDeterministic = not . any hasDuplicates . symbolsFromStates
+
+complete :: (Eq a, Ord a) => a -> String -> FSM a -> FSM a
+complete a alpha m = fsmFromList ("complete_" ++ label m)
+                   $ trashitions ++ complitions ++ elems (transitions m)
+  where trash = S a (False, False)
+        trashitions = (\c -> T trash c trash) <$> alpha
+        complitions = symbolsWithStates m
+                    >>= (\(s, ss) -> (\c -> T s c trash) <$> ss) . second (`alphaComp` alpha)
+
+convertToDFA :: FSM a -> FSM (Set a)
+convertToDFA = undefined
