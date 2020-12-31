@@ -11,15 +11,6 @@ red = "\x1b[31m"
 grn = "\x1b[32m"
 yel = "\x1b[33m"
 
-
-{-
-printSet :: (Show a) => Set a -> IO ()
-printSet = putStrLn . showSet
-
-printSetLn :: (Show a) => Set a -> IO ()
-printSetLn = putStrLn . showSetLn
--}
-
 (<>>=>) :: (Foldable m, Foldable n, Monoid (n b)) => m a -> (a -> n b) -> n b
 m <>>=> f = foldl' (\acc a -> acc <> f a) mempty m
 
