@@ -103,22 +103,19 @@ complete a alpha m = fsmFromList ("complete_" ++ label m)
 
 
 
-_convertToDFA :: Ord a => S (Set a) -> Set (S (Set a)) -> FSM a -> FSM (Set a) -> FSM (Set a)
-_convertToDFA currentSetState stack ma mb =
-    DS.foldl' fsmAddTrans mb (
-      DS.map (\nextActiveState ->
-        let m = _convertToDFA nextActiveState (stack <> nextActiveStates) ma (fsmAddTrans mb newTrans)
-        in transitions m
-      ) nextActiveStates
-    )
-  where currentTransSet = groupBySymbol $ fsmTransFromSetState currentSetState ma
-        newTrans = DS.map (\st -> T currentSetState
-                                    (aFromTrans st)
-                                    (createEndingState False st)
-                          ) currentTransSet
-        nextStates = endingStates newTrans
-        nextActiveStates = DS.filter (not . (`DS.member` stack)) nextStates
-
 convertToDFA :: Ord a => FSM a -> FSM (Set a)
-convertToDFA m = _convertToDFA (mergeStates True $ fsmInitialStates m)
-                               empty m $ FSM (label m ++ "_deter") empty
+convertToDFA m = FSM (label m ++ "_deter")
+               $ generateTrans (mergeStates True $ fsmInitialStates m) empty m
+  where generateTrans :: Ord a => S (Set a) -> Set (S (Set a)) -> FSM a -> Set (T (Set a))
+        generateTrans currentSetState stack ma =
+              nextActiveStates <>>=> (\nextActiveState ->
+                newTrans <>
+                generateTrans nextActiveState (stack <> nextActiveStates) ma
+              )
+          where currentTransSet = groupBySymbol $ fsmTransFromSetState currentSetState ma
+                newTrans = DS.map (\st -> T currentSetState
+                                            (aFromTrans st)
+                                            (createEndingState False st)
+                                  ) currentTransSet
+                nextStates = endingStates newTrans
+                nextActiveStates = DS.filter (not . (`DS.member` stack)) nextStates
