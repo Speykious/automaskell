@@ -35,8 +35,15 @@ instance (Ord a, Show a) => DotShow (FSM a) where
   dotPDF m = dotShowPDF ("cache/" ++ label m) m
 
 
+
+fsmAddTrans :: Ord a => FSM a -> Set (T a) -> FSM a
+fsmAddTrans (FSM l st) sta = FSM l (st <> sta)
+
 fsmTransFromState :: Eq a => S a -> FSM a -> Set (T a)
 fsmTransFromState s = transFromState s . transitions
+
+fsmTransFromSetState :: Ord a => S (Set a) -> FSM a -> Set (T a)
+fsmTransFromSetState s = DS.filter ((`DS.member` stateLabel s) . stateLabel . transStart) . transitions
 
 fsmFromList :: Ord a => String -> [T a] -> FSM a
 fsmFromList l = FSM l . fromList
@@ -94,10 +101,15 @@ complete a alpha m = fsmFromList ("complete_" ++ label m)
 (<|>) :: Ord a => FSM a -> FSM a -> FSM a
 (FSM la sta) <|> (FSM lb stb) = FSM (la ++ "_" ++ lb) (sta <> stb)
 
-_convertToDFA :: Ord a => Set (S a) -> Set (S (Set a)) -> FSM a -> FSM (Set a)
-_convertToDFA currentStates stack m = undefined
-  where currentSetState = mergeStates False currentStates
-        currentTransSet = groupBySymbol $ currentStates <>>=> (`fsmTransFromState` m)
+_convertToDFA :: Ord a => S (Set a) -> Set (S (Set a)) -> FSM a -> FSM (Set a) -> FSM (Set a)
+_convertToDFA currentSetState stack ma mb =
+    DS.foldl' fsmAddTrans mb (
+      DS.map (\nextActiveState ->
+        let m = _convertToDFA nextActiveState (stack <> nextActiveStates) ma (fsmAddTrans mb newTrans)
+        in transitions m
+      ) nextActiveStates
+    )
+  where currentTransSet = groupBySymbol $ fsmTransFromSetState currentSetState ma
         newTrans = DS.map (\st -> T currentSetState
                                     (aFromTrans st)
                                     (createEndingState False st)
