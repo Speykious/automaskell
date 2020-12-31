@@ -31,8 +31,14 @@ transWithLabel c = DS.filter $ (== c) . symbol
 endingStates :: Ord a => Set (T a) -> Set (S a)
 endingStates = DS.map transEnd
 
+createEndingState :: Ord a => Bool -> Set (T a) -> S (Set a)
+createEndingState b = mergeStates b . endingStates
+
 alphaFromTrans :: Set (T a) -> String
 alphaFromTrans = elems . DS.map symbol
+
+aFromTrans :: Set (T a) -> Char
+aFromTrans = head . alphaFromTrans
 
 groupBySymbol :: Ord a => Set (T a) -> Set (Set (T a))
 groupBySymbol st = fromList $ (`transWithLabel` st) <$> alphaFromTrans st
