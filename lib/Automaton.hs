@@ -101,6 +101,9 @@ complete a alpha m = fsmFromList ("complete_" ++ label m)
 (<|>) :: Ord a => FSM a -> FSM a -> FSM a
 (FSM la sta) <|> (FSM lb stb) = FSM (la ++ "_" ++ lb) (sta <> stb)
 
+
+
+-- ... <_<'
 _convertToDFA :: Ord a => S (Set a) -> Set (S (Set a)) -> FSM a -> FSM (Set a) -> FSM (Set a)
 _convertToDFA currentSetState stack ma mb =
     DS.foldl' fsmAddTrans mb (
@@ -116,3 +119,7 @@ _convertToDFA currentSetState stack ma mb =
                           ) currentTransSet
         nextStates = endingStates newTrans
         nextActiveStates = DS.filter (`DS.member` stack) nextStates
+
+convertToDFA :: Ord a => FSM a -> FSM (Set a)
+convertToDFA m = _convertToDFA (mergeStates True $ fsmInitialStates m)
+                               empty m $ FSM (label m ++ "_deter") empty
