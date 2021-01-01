@@ -38,6 +38,10 @@ isFinalSet = not . DS.null . finalStates
 mergeStates :: Ord a => Bool -> Set (S a) -> S (Set a)
 mergeStates i ss = S (DS.map stateLabel ss) (i, isFinalSet ss)
 
+type BoolRelation = Bool -> Bool -> Bool
+pairStates :: Ord a => Bool -> BoolRelation -> S a -> S b -> S (a, b)
+pairStates i op (S a (_, fa)) (S b (_, fb)) = S (a, b) (i, op fa fb)
+
 (|==|) :: Eq a => S a -> S a -> Bool
 (S a _) |==| (S a' _) = a == a'
 

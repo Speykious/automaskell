@@ -102,9 +102,6 @@ complete a alpha m = fsmFromList ("complete_" ++ label m)
         complitions = symbolsWithStates m
                     >>= (\(s, cs) -> (\c -> T s c trash) <$> cs) . second (`alphaComp` alpha)
 
-(<|>) :: Ord a => FSM a -> FSM a -> FSM a
-(FSM la sta) <|> (FSM lb stb) = FSM (la ++ "_" ++ lb) (sta <> stb)
-
 
 
 convertToDFA :: (Show a, Ord a) => FSM a -> FSM (Set a)
@@ -118,3 +115,17 @@ convertToDFA m = FSM (label m ++ "_deter") $ generateTrans initial (DS.singleton
                 snt  = (\st -> T css (aFromTrans st) (getEndingState st)) <<$>> csst
                 sans = DS.filter (not . (`labelMember` stack)) (endingStates snt)
                 snnt = sans <>>=> (\ans -> generateTrans ans (stack <> sans) m)
+
+
+
+intersecTrans :: S (a, b) -> Set (S (a, b)) -> FSM a -> FSM b -> Set (T (a, b))
+intersecTrans css stack ma mb = undefined
+  
+
+(<&>) :: (Ord a, Ord b) => FSM a -> FSM b -> FSM (a, b)
+(FSM la sta) <&> (FSM lb stb) = FSM (la ++ "_and_" ++ lb) undefined 
+
+
+
+(<|>) :: Ord a => FSM a -> FSM a -> FSM a
+(FSM la sta) <|> (FSM lb stb) = FSM (la ++ "_" ++ lb) (sta <> stb)
