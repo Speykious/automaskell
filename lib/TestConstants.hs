@@ -22,6 +22,7 @@ t2 = T s1 'a' s0
 t3 = T s1 'b' s2
 t4 = T s2 'a' s0
 
-automaton = fsmFromList "automaton" [t0, t1, t2, t3, t4]
-completeAutomaton = complete (-1) "ab" automaton
-deter = fsmFromList "deter" [t0, td, t1, t2, t3, t4]
+auto1 = fsmFromList "auto1" [t0, t1, t2, t3, t4]
+auto1C = complete (-1) "ab" auto1
+auto2 = fsmFromList "auto2" [t0, td, t1, t2, t3, t4]
+deter = convertToDFA auto2

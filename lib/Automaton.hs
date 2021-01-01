@@ -8,7 +8,7 @@ import Set (Set, fromList, empty, elems)
 import qualified Set as DS
 import Data.List (foldl', lines, intercalate)
 import Data.Foldable (find)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, fromJust)
 import Data.Bifunctor (second)
 
 import Debug.Trace (trace)
@@ -31,10 +31,8 @@ instance (Ord a, Show a) => DotShow (FSM a) where
   dotShow (FSM l st) = "digraph " ++ l ++ " {\n"
                      ++ "  rankdir=LR;\n"
                      ++ unlines (("  " ++) . dotShow <$> elems st)
-                     ++ unlines (("  " ++) . unwrap . dotDeclare <$> elems (statesFromTrans st))
+                     ++ unlines (("  " ++) . fromJust . dotDeclare <$> elems (statesFromTrans st))
                      ++ "}"
-    where unwrap (Just a) = a
-          unwrap Nothing = error "Trying to unwrap Nothing"
 
   dotPDF m = dotShowPDF ("cache/" ++ label m) m
 
@@ -57,6 +55,9 @@ fsmStates = statesFromTrans . transitions
 
 fsmInitialStates :: Ord a => FSM a -> Set (S a)
 fsmInitialStates = initialStates . fsmStates
+
+fsmInitialState :: Ord a => FSM a -> Maybe (S a)
+fsmInitialState = initialState . fsmStates
 
 fsmFinalStates :: Ord a => FSM a -> Set (S a)
 fsmFinalStates = finalStates . fsmStates

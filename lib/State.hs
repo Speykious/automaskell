@@ -4,6 +4,7 @@ import DotShow
 import Helpers (clr, dim, red, grn)
 import Set (Set)
 import qualified Set as DS
+import Data.Foldable (find)
 
 data S a = S { stateLabel :: a
              , stateFlags :: (Bool, Bool) } deriving (Eq, Ord) -- State
@@ -24,13 +25,16 @@ instance Show a => DotShow (S a) where
                                   , if f then "peripheries=2" else "" ]
 
 initialStates :: Set (S a) -> Set (S a)
-initialStates = DS.filter $ \(S _ (i, _)) -> i
+initialStates = DS.filter $ fst . stateFlags
+
+initialState :: Set (S a) -> Maybe (S a)
+initialState = find $ fst . stateFlags
 
 isInitialSet :: Set (S a) -> Bool
 isInitialSet = not . DS.null . initialStates
 
 finalStates :: Set (S a) -> Set (S a)
-finalStates = DS.filter $ \(S _ (_, f)) -> f
+finalStates = DS.filter $ snd . stateFlags
 
 isFinalSet :: Set (S a) -> Bool
 isFinalSet = not . DS.null . finalStates
