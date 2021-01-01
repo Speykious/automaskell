@@ -7,7 +7,11 @@ import Transition
 import Set (Set, fromList, empty, elems)
 import qualified Set as DS
 import Data.List (foldl', lines, intercalate)
+import Data.Foldable (find)
+import Data.Maybe (fromMaybe)
 import Data.Bifunctor (second)
+
+import Debug.Trace (trace)
 
 data FSM a = FSM { label :: String
                  , transitions :: Set (T a) } deriving (Eq, Ord) -- Finite State Machine
@@ -103,13 +107,14 @@ complete a alpha m = fsmFromList ("complete_" ++ label m)
 
 
 
-convertToDFA :: Ord a => FSM a -> FSM (Set a)
-convertToDFA m = FSM (label m ++ "_deter")
-               $ generateTrans (mergeStates True $ fsmInitialStates m) empty m
-  where generateTrans :: Ord a => S (Set a) -> Set (S (Set a)) -> FSM a -> Set (T (Set a))
+convertToDFA :: (Show a, Ord a) => FSM a -> FSM (Set a)
+convertToDFA m = FSM (label m ++ "_deter") $ generateTrans initial (DS.singleton initial) m
+  where initial = mergeStates True $ fsmInitialStates m
         generateTrans css stack m = snt <> snnt
-          where csst = groupBySymbol $ fsmTransFromSetState css m
-                snt  = (\st -> T css (aFromTrans st) (createEndingState st)) <<$>> csst
-                sns  = endingStates snt
-                sans = DS.filter (not . (`labelMember` stack)) sns
+          where getEndingState st = created `fromMaybe` found
+                  where created = createEndingState st
+                        found   = find (|==| created) stack
+                csst = groupBySymbol $ fsmTransFromSetState css m
+                snt  = (\st -> T css (aFromTrans st) (getEndingState st)) <<$>> csst
+                sans = DS.filter (not . (`labelMember` stack)) (endingStates snt)
                 snnt = sans <>>=> (\ans -> generateTrans ans (stack <> sans) m)

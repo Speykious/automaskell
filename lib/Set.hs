@@ -59,5 +59,12 @@ map f (Set a) = Set $ DS.map f a
 filter :: (a -> Bool) -> Set a -> Set a
 filter f (Set a) = Set $ DS.filter f a
 
+{-
+get :: (a -> Bool) -> Set a -> Maybe a
+get f sa = case elems $ filter f sa of
+             [a] -> Just a
+             _   -> Nothing
+-}
+
 foldl' :: (c -> b -> c) -> c -> Set b -> c
 foldl' f a = DS.foldl' f a . innerSet
