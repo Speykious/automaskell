@@ -92,7 +92,9 @@ fsmAlphaFromState :: Eq a => S a -> FSM a -> String
 fsmAlphaFromState s = alphaFromTrans . fsmTransFromState s
 
 isDeterministic :: Ord a => FSM a -> Bool
-isDeterministic = not . any hasDuplicates . symbolsFromStates
+isDeterministic m = vi m && vt m
+  where vi = (<= 1) . DS.size . fsmInitialStates
+        vt = not . any hasDuplicates . symbolsFromStates
 
 complete :: Ord a => a -> String -> FSM a -> FSM a
 complete a alpha m = fsmFromList ("complete_" ++ label m)
@@ -120,7 +122,7 @@ convertToDFA m = FSM (label m ++ "_deter") $ generateTrans initial (DS.singleton
 
 intersecTrans :: S (a, b) -> Set (S (a, b)) -> FSM a -> FSM b -> Set (T (a, b))
 intersecTrans css stack ma mb = undefined
-  
+
 
 (<&>) :: (Ord a, Ord b) => FSM a -> FSM b -> FSM (a, b)
 (FSM la sta) <&> (FSM lb stb) = FSM (la ++ "_and_" ++ lb) undefined 
