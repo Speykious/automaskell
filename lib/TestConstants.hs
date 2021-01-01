@@ -7,6 +7,7 @@ import Automaton
 import DotShow
 import Helpers
 import Data.List (foldl', intercalate)
+import Data.Maybe (fromMaybe, fromJust)
 import Set (fromList)
 import qualified Set as DS
 
