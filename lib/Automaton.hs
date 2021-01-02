@@ -101,9 +101,10 @@ isDeterministic m = vi m && vt m
   where vi = (<= 1) . DS.size . fsmInitialStates
         vt = not . any hasDuplicates . symbolsFromStates
 
-complete :: Ord a => a -> String -> FSM a -> FSM a
-complete a alpha m = fsmFromList ("complete_" ++ label m)
-                   $ trashitions ++ complitions ++ elems (transitions m)
+complete :: (Ord a, Show a) => a -> String -> FSM a -> FSM a
+complete a alpha m = if isComplete alpha m then m
+                     else fsmFromList ("complete_" ++ label m)
+                        $ trashitions ++ complitions ++ elems (transitions m)
   where trash = S a (False, False)
         trashitions = (\c -> T trash c trash) <$> alpha
         complitions = symbolsWithStates m
@@ -123,10 +124,18 @@ generateTransFn gnt css stack w = snt <> snnt
         sans = DS.filter (not . (`labelMember` stack)) (endingStates snt)
         snnt = sans <>>=> (\ans -> generateTransFn gnt ans (stack <> sans) w)
 
+
+
 generateDFATrans :: Ord a => S (Set a) -> Set (S (Set a)) -> FSM a -> Set (T (Set a))
 generateDFATrans = generateTransFn gnt
   where gnt css stack m = (\st -> T css (aFromTrans st) (getEndingState stack st)) <<$>> csst
           where csst = groupBySymbol $ fsmTransFromSetState css m
+
+convertToDFA :: (Show a, Ord a) => FSM a -> FSM (Set a)
+convertToDFA m = FSM (label m ++ "_deter") $ generateDFATrans initial (DS.singleton initial) m
+  where initial = mergeStates True $ fsmInitialStates m
+
+
 
 intersecTrans :: (Ord a, Ord b) => S (a, b) -> Set (S (a, b)) -> (FSM a, FSM b) -> Set (T (a, b))
 intersecTrans = generateTransFn gnt
@@ -135,12 +144,6 @@ intersecTrans = generateTransFn gnt
                 alpha = DS.elems $ DS.fromList (alphaFromTrans sta ++ alphaFromTrans stb)
                 cstp = fromList $ catMaybes $ (\c -> zipMaybe (cfind c sta, cfind c stb)) <$> alpha
                   where cfind c = find $ (== c) . symbol
-
-
-
-convertToDFA :: (Show a, Ord a) => FSM a -> FSM (Set a)
-convertToDFA m = FSM (label m ++ "_deter") $ generateDFATrans initial (DS.singleton initial) m
-  where initial = mergeStates True $ fsmInitialStates m
 
 (<&>) :: (Ord a, Ord b) => FSM a -> FSM b -> FSM (a, b)
 ma <&> mb = FSM (label ma ++ "_and_" ++ label mb)
