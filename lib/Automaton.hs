@@ -116,23 +116,6 @@ getEndingState stack st = created `fromMaybe` found
 
 
 
-generateDFATrans :: Ord a => S (Set a) -> Set (S (Set a)) -> FSM a -> Set (T (Set a))
-generateDFATrans css stack m = snt <> snnt
-  where csst = groupBySymbol $ fsmTransFromSetState css m
-        snt  = (\st -> T css (aFromTrans st) (getEndingState stack st)) <<$>> csst
-        sans = DS.filter (not . (`labelMember` stack)) (endingStates snt)
-        snnt = sans <>>=> (\ans -> generateDFATrans ans (stack <> sans) m)
-
-intersecTrans :: (Ord a, Ord b) => S (a, b) -> Set (S (a, b)) -> (FSM a, FSM b) -> Set (T (a, b))
-intersecTrans css stack (ma, mb) = snt <> snnt
-  where (sta, stb) = fsmTransFromPairState css (ma, mb)
-        alpha = DS.elems $ DS.fromList (alphaFromTrans sta ++ alphaFromTrans stb)
-        cstp = fromList $ catMaybes $ (\c -> zipMaybe (cfind c sta, cfind c stb)) <$> alpha
-          where cfind c = find $ (== c) . symbol
-        snt  = (\tp -> T css (aFromTransPair tp) (pairEndingStates (&&) tp)) <<$>> cstp
-        sans = DS.filter (not . (`labelMember` stack)) (endingStates snt)
-        snnt = sans <>>=> (\ans -> intersecTrans ans (stack <> sans) (ma, mb))
-
 generateTransFn :: Ord a => (S a -> Set (S a) -> w -> Set (T a))
                          -> (S a -> Set (S a) -> w -> Set (T a))
 generateTransFn gnt css stack w = snt <> snnt
@@ -140,15 +123,23 @@ generateTransFn gnt css stack w = snt <> snnt
         sans = DS.filter (not . (`labelMember` stack)) (endingStates snt)
         snnt = sans <>>=> (\ans -> generateTransFn gnt ans (stack <> sans) w)
 
-newGenerateDFATrans :: Ord a => S (Set a) -> Set (S (Set a)) -> FSM a -> Set (T (Set a))
-newGenerateDFATrans = generateTransFn gnt
-  where gnt css stack w = (\st -> T css (aFromTrans st) (getEndingState stack st)) <<$>> csst
-          where csst = groupBySymbol $ fsmTransFromSetState css w
+generateDFATrans :: Ord a => S (Set a) -> Set (S (Set a)) -> FSM a -> Set (T (Set a))
+generateDFATrans = generateTransFn gnt
+  where gnt css stack m = (\st -> T css (aFromTrans st) (getEndingState stack st)) <<$>> csst
+          where csst = groupBySymbol $ fsmTransFromSetState css m
+
+intersecTrans :: (Ord a, Ord b) => S (a, b) -> Set (S (a, b)) -> (FSM a, FSM b) -> Set (T (a, b))
+intersecTrans = generateTransFn gnt
+  where gnt css stack (ma, mb) = (\tp -> T css (aFromTransPair tp) (pairEndingStates (&&) tp)) <<$>> cstp
+          where (sta, stb) = fsmTransFromPairState css (ma, mb)
+                alpha = DS.elems $ DS.fromList (alphaFromTrans sta ++ alphaFromTrans stb)
+                cstp = fromList $ catMaybes $ (\c -> zipMaybe (cfind c sta, cfind c stb)) <$> alpha
+                  where cfind c = find $ (== c) . symbol
 
 
 
 convertToDFA :: (Show a, Ord a) => FSM a -> FSM (Set a)
-convertToDFA m = FSM (label m ++ "_deter") $ newGenerateDFATrans initial (DS.singleton initial) m
+convertToDFA m = FSM (label m ++ "_deter") $ generateDFATrans initial (DS.singleton initial) m
   where initial = mergeStates True $ fsmInitialStates m
 
 (<&>) :: (Ord a, Ord b) => FSM a -> FSM b -> FSM (a, b)
