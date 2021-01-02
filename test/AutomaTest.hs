@@ -53,8 +53,10 @@ example2 = fsmFromList "example2" [ T e1 'b' e2
                                   , T e3 'b' e2
                                   , T e3 'a' e3 ]
 
-intexample = example1 <&> example2
-uniexample = example1 <|> example2
+examplete = complete (-1) "ab" example2
 
 main :: IO ()
-main = print intexample
+main = do dotPDF (example1 <&> examplete)
+          dotPDF (example1 <|> examplete)
+          dotPDF (example1 <^> examplete)
+          dotPDF (example1 <=> examplete)

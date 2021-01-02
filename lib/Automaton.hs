@@ -172,26 +172,54 @@ convertToDFA m = generateFSMFn (label m ++ "_deter")
 
 
 
--- | Recursive transition generator for the intersection of two DFA.
-intersecTrans :: (Ord a, Ord b) => NewTransGen (a, b) (FSM a, FSM b)
-intersecTrans = generateTransFn gnt
-  where gnt css stack (ma, mb) = (\tp -> T css (aFromTransPair tp) (pairEndingStates (&&) tp)) <<$>> cstp
+-- | Recursive transition generator for a pairing operation of two automata.
+generatePairTrans :: (Ord a, Ord b) => BoolRelation -> NewTransGen (a, b) (FSM a, FSM b)
+generatePairTrans op = generateTransFn gnt
+  where gnt css stack (ma, mb) = (\tp -> T css (aFromTransPair tp) (pairEndingStates op tp)) <<$>> cstp
           where (sta, stb) = fsmTransFromPairState css (ma, mb)
                 alpha = DS.elems $ DS.fromList (alphaFromTrans sta ++ alphaFromTrans stb)
                 cstp = fromList $ catMaybes $ (\c -> zipMaybe (cfind c sta, cfind c stb)) <$> alpha
                   where cfind c = find $ (== c) . symbol
 
+-- | Constructs two automata with a pairing operation using a pair of two automata.
+generatePairFSM :: (Ord a, Ord b) => String                            -- ^ The label separator.
+                                  -> BoolRelation                      -- ^ The pairing operation, for example (&&) or (||).
+                                  -> (FSM a, FSM b)                    -- ^ The pair of two automata.
+                                  -> FSM (a, b)
+generatePairFSM lsep op (ma, mb) =
+  generateFSMFn (label ma ++ lsep ++ label mb)
+                (pairStates True op ( fromJust $ fsmInitialState ma
+                                    , fromJust $ fsmInitialState mb ))
+                (generatePairTrans op) (ma, mb)
+
+
+
+
+intersecTrans :: (Ord a, Ord b) => NewTransGen (a, b) (FSM a, FSM b)
+intersecTrans = generatePairTrans (&&)
+
+
+
 -- | Outputs the intersection of two automata.
 -- # Hypothesis
 -- Both have to be deterministic, but not necessarily complete. However, the function doesn't check.
 (<&>) :: (Ord a, Ord b) => FSM a -> FSM b -> FSM (a, b)
-ma <&> mb = generateFSMFn (label ma ++ "_and_" ++ label mb)
-                          (pairStates True (&&) ( fromJust $ fsmInitialState ma
-                                                , fromJust $ fsmInitialState mb ))
-                          intersecTrans (ma, mb)
+ma <&> mb = generatePairFSM "_and_" (&&) (ma, mb)
 
+-- | Outputs the union of two automata.
+-- # Hypothesis
+-- Both have to be deterministic and complete. However, the function doesn't check.
+(<|>) :: (Ord a, Ord b) => FSM a -> FSM b -> FSM (a, b)
+ma <|> mb = generatePairFSM "_or_" (||) (ma, mb)
 
+-- | Outputs the xor of two automata.
+-- # Hypothesis
+-- Both have to be deterministic and complete. However, the function doesn't check.
+(<^>) :: (Ord a, Ord b) => FSM a -> FSM b -> FSM (a, b)
+ma <^> mb = generatePairFSM "_xor_" (/=) (ma, mb)
 
--- | Is *supposed* to output the union of two automata. It just doesn't work for now.
-(<|>) :: Ord a => FSM a -> FSM a -> FSM a
-(FSM la sta) <|> (FSM lb stb) = FSM (la ++ "_" ++ lb) (sta <> stb)
+-- | Outputs the equivalence of two automata.
+-- # Hypothesis
+-- Both have to be deterministic and complete. However, the function doesn't check.
+(<=>) :: (Ord a, Ord b) => FSM a -> FSM b -> FSM (a, b)
+ma <=> mb = generatePairFSM "_eq_" (==) (ma, mb)
