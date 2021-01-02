@@ -117,12 +117,15 @@ getEndingState stack st = created `fromMaybe` found
 
 
 
-generateTransFn :: Ord a => (S a -> Set (S a) -> w -> Set (T a))
-                         -> (S a -> Set (S a) -> w -> Set (T a))
+type NewTransGen a w = S a -> Set (S a) -> w -> Set (T a)
+generateTransFn :: Ord a => NewTransGen a w -> NewTransGen a w
 generateTransFn gnt css stack w = snt <> snnt
-  where snt = gnt css stack w
+  where snt  = gnt css stack w
         sans = DS.filter (not . (`labelMember` stack)) (endingStates snt)
         snnt = sans <>>=> (\ans -> generateTransFn gnt ans (stack <> sans) w)
+
+generateFSMFn :: Ord a => String -> S a -> NewTransGen a w -> w -> FSM a
+generateFSMFn l i gnt w = FSM l $ generateTransFn gnt i (DS.singleton i) w
 
 
 
@@ -132,8 +135,9 @@ generateDFATrans = generateTransFn gnt
           where csst = groupBySymbol $ fsmTransFromSetState css m
 
 convertToDFA :: (Show a, Ord a) => FSM a -> FSM (Set a)
-convertToDFA m = FSM (label m ++ "_deter") $ generateDFATrans initial (DS.singleton initial) m
-  where initial = mergeStates True $ fsmInitialStates m
+convertToDFA m = generateFSMFn (label m ++ "_deter")
+                               (mergeStates True $ fsmInitialStates m)
+                               generateDFATrans m
 
 
 
@@ -146,9 +150,10 @@ intersecTrans = generateTransFn gnt
                   where cfind c = find $ (== c) . symbol
 
 (<&>) :: (Ord a, Ord b) => FSM a -> FSM b -> FSM (a, b)
-ma <&> mb = FSM (label ma ++ "_and_" ++ label mb)
-          $ intersecTrans initial (DS.singleton initial) (ma, mb)
-  where initial = pairStates True (&&) (fromJust $ fsmInitialState ma, fromJust $ fsmInitialState mb)
+ma <&> mb = generateFSMFn (label ma ++ "_and_" ++ label mb)
+                          (pairStates True (&&) ( fromJust $ fsmInitialState ma
+                                                , fromJust $ fsmInitialState mb ))
+                          intersecTrans (ma, mb)
 
 
 
