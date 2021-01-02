@@ -34,11 +34,20 @@ endingStates = DS.map transEnd
 createEndingState :: Ord a => Set (T a) -> S (Set a)
 createEndingState = mergeStates False . endingStates
 
+pairEndingStates :: Ord a => BoolRelation -> (T a, T b) -> S (a, b)
+pairEndingStates op (ta, tb) = pairStates False op (transEnd ta, transEnd tb)
+
 alphaFromTrans :: Set (T a) -> String
 alphaFromTrans = elems . DS.map symbol
 
+alphaFromTransPair :: (T a, T b) -> String
+alphaFromTransPair (ta, tb) = elems $ fromList [symbol ta, symbol tb]
+
 aFromTrans :: Set (T a) -> Char
 aFromTrans = head . alphaFromTrans
+
+aFromTransPair :: (T a, T b) -> Char
+aFromTransPair = head . alphaFromTransPair
 
 groupBySymbol :: Ord a => Set (T a) -> Set (Set (T a))
 groupBySymbol st = fromList $ (`transWithLabel` st) <$> alphaFromTrans st

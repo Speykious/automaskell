@@ -8,7 +8,7 @@ import Set (Set, fromList, empty, elems)
 import qualified Set as DS
 import Data.List (foldl', lines, intercalate)
 import Data.Foldable (find)
-import Data.Maybe (fromMaybe, fromJust)
+import Data.Maybe (catMaybes, fromMaybe, fromJust)
 import Data.Bifunctor (second)
 
 import Debug.Trace (trace)
@@ -46,6 +46,10 @@ fsmTransFromState s = transFromState s . transitions
 
 fsmTransFromSetState :: Ord a => S (Set a) -> FSM a -> Set (T a)
 fsmTransFromSetState s = DS.filter ((`DS.member` stateLabel s) . stateLabel . transStart) . transitions
+
+fsmTransFromPairState :: (Eq a, Eq b) => S (a, b) -> (FSM a, FSM b) -> (Set (T a), Set (T b))
+fsmTransFromPairState (S (a, b) _) (ma, mb) = (filtrans a ma, filtrans b mb)
+  where filtrans l = DS.filter ((== l) . stateLabel . transStart) . transitions
 
 fsmFromList :: Ord a => String -> [T a] -> FSM a
 fsmFromList l = FSM l . fromList
@@ -105,28 +109,52 @@ complete a alpha m = fsmFromList ("complete_" ++ label m)
         complitions = symbolsWithStates m
                     >>= (\(s, cs) -> (\c -> T s c trash) <$> cs) . second (`alphaComp` alpha)
 
+getEndingState :: (Ord a, Foldable t) => t (S (Set a)) -> Set (T a) -> S (Set a)
+getEndingState stack st = created `fromMaybe` found
+  where created = createEndingState st
+        found   = find (|==| created) stack
+
+
+
+generateDFATrans :: Ord a => S (Set a) -> Set (S (Set a)) -> FSM a -> Set (T (Set a))
+generateDFATrans css stack m = snt <> snnt
+  where csst = groupBySymbol $ fsmTransFromSetState css m
+        snt  = (\st -> T css (aFromTrans st) (getEndingState stack st)) <<$>> csst
+        sans = DS.filter (not . (`labelMember` stack)) (endingStates snt)
+        snnt = sans <>>=> (\ans -> generateDFATrans ans (stack <> sans) m)
+
+intersecTrans :: (Ord a, Ord b) => S (a, b) -> Set (S (a, b)) -> (FSM a, FSM b) -> Set (T (a, b))
+intersecTrans css stack (ma, mb) = snt <> snnt
+  where (sta, stb) = fsmTransFromPairState css (ma, mb)
+        alpha = DS.elems $ DS.fromList (alphaFromTrans sta ++ alphaFromTrans stb)
+        cstp = fromList $ catMaybes $ (\c -> zipMaybe (cfind c sta, cfind c stb)) <$> alpha
+          where cfind c = find $ (== c) . symbol
+        snt  = (\tp -> T css (aFromTransPair tp) (pairEndingStates (&&) tp)) <<$>> cstp
+        sans = DS.filter (not . (`labelMember` stack)) (endingStates snt)
+        snnt = sans <>>=> (\ans -> intersecTrans ans (stack <> sans) (ma, mb))
+
+generateTransFn :: Ord a => (S a -> Set (S a) -> w -> Set (T a))
+                         -> (S a -> Set (S a) -> w -> Set (T a))
+generateTransFn gnt css stack w = snt <> snnt
+  where snt = gnt css stack w
+        sans = DS.filter (not . (`labelMember` stack)) (endingStates snt)
+        snnt = sans <>>=> (\ans -> generateTransFn gnt ans (stack <> sans) w)
+
+newGenerateDFATrans :: Ord a => S (Set a) -> Set (S (Set a)) -> FSM a -> Set (T (Set a))
+newGenerateDFATrans = generateTransFn gnt
+  where gnt css stack w = (\st -> T css (aFromTrans st) (getEndingState stack st)) <<$>> csst
+          where csst = groupBySymbol $ fsmTransFromSetState css w
+
 
 
 convertToDFA :: (Show a, Ord a) => FSM a -> FSM (Set a)
-convertToDFA m = FSM (label m ++ "_deter") $ generateTrans initial (DS.singleton initial) m
+convertToDFA m = FSM (label m ++ "_deter") $ newGenerateDFATrans initial (DS.singleton initial) m
   where initial = mergeStates True $ fsmInitialStates m
-        generateTrans css stack m = snt <> snnt
-          where getEndingState st = created `fromMaybe` found
-                  where created = createEndingState st
-                        found   = find (|==| created) stack
-                csst = groupBySymbol $ fsmTransFromSetState css m
-                snt  = (\st -> T css (aFromTrans st) (getEndingState st)) <<$>> csst
-                sans = DS.filter (not . (`labelMember` stack)) (endingStates snt)
-                snnt = sans <>>=> (\ans -> generateTrans ans (stack <> sans) m)
-
-
-
-intersecTrans :: S (a, b) -> Set (S (a, b)) -> FSM a -> FSM b -> Set (T (a, b))
-intersecTrans css stack ma mb = undefined
-
 
 (<&>) :: (Ord a, Ord b) => FSM a -> FSM b -> FSM (a, b)
-(FSM la sta) <&> (FSM lb stb) = FSM (la ++ "_and_" ++ lb) undefined 
+ma <&> mb = FSM (label ma ++ "_and_" ++ label mb)
+          $ intersecTrans initial (DS.singleton initial) (ma, mb)
+  where initial = pairStates True (&&) (fromJust $ fsmInitialState ma, fromJust $ fsmInitialState mb)
 
 
 
