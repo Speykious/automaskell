@@ -11,8 +11,7 @@ copyright:           Speykious
 category:            Math
 
 library
-  exposed-modules:     TestConstants
-                     , Automaton
+  exposed-modules:     Automaton
                      , DotShow
                      , Helpers
                      , Transition

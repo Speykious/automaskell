@@ -1,48 +1,60 @@
 module Main (main) where
 
-import Prelude hiding (null)
+import State
+import Transition
 import Automaton
 import DotShow
+import Helpers
 import Data.List (foldl', intercalate)
-import Data.Set (Set, null, fromList)
+import Data.Maybe (catMaybes, fromMaybe, fromJust)
+import Data.Bifunctor
+import Data.Foldable (find)
+import Set (Set, fromList)
+import qualified Set as DS
 
 s0 = S 0 (False, False)
 s1 = S 1 (False, True)
 s2 = S 2 (True, False)
-s3 = S 3 (True, True)
 
-t0 = T s0 'a' s1
-t1 = T s0 'b' s1
-t2 = T s1 'a' s0
-t3 = T s1 'b' s2
-t4 = T s2 'a' s0
+ta = T s2 'b' s1
+tb = T s0 'a' s2
+ts = [ T s0 'b' s1
+     , T s0 'a' s1
+     , T s1 'a' s0
+     , T s1 'b' s2
+     , T s2 'a' s0 ]
 
-ts = [t0, t1, t2, t3, t4]
-automaton = fsm "A" ts
+type A = Integer
 
-showSetg :: (Show a) => String -> Set a -> String
-showSetg sep s
-  | null s    = "{}"
-  | otherwise = "{ " ++ intercalate sep (foldl' (\acc a -> show a : acc) [] s) ++ " }"
+auto :: FSM A
+auto = fsmFromList "auto" (ta:ts)
+auto2 :: FSM A
+auto2 = fsmFromList "auto2" (tb:ts)
+deter :: FSM (Set A)
+deter = convertToDFA auto2
+autodeter :: FSM (A, Set A)
+autodeter = auto <&> deter
 
-showSet :: (Show a) => Set a -> String
-showSet = showSetg ", "
+e1 = S 1 (True, False)
+e2 = S 2 (False, False)
+e3 = S 3 (False, True)
 
-showSetLn :: (Show a) => Set a -> String
-showSetLn = showSetg "\n, "
+example1 :: FSM A
+example1 = fsmFromList "example1" [ T e1 'b' e1
+                                  , T e1 'a' e2
+                                  , T e2 'a' e2
+                                  , T e2 'b' e3
+                                  , T e3 'a' e3
+                                  , T e3 'b' e3 ]
+example2 :: FSM A
+example2 = fsmFromList "example2" [ T e1 'b' e2
+                                  , T e2 'b' e2
+                                  , T e2 'a' e3
+                                  , T e3 'b' e2
+                                  , T e3 'a' e3 ]
 
-printSet :: (Show a) => Set a -> IO ()
-printSet = putStrLn . showSet
-printSetLn :: (Show a) => Set a -> IO ()
-printSetLn = putStrLn . showSetLn
+intexample = example1 <&> example2
+uniexample = example1 <|> example2
 
 main :: IO ()
-main = do
-  putStr $ bld ++ "States:" ++ clr ++ " "
-  print [s0, s1, s2, s3]
-  putStrLn $ bld ++ "Transitions:" ++ clr
-  putStrLn $ unlines $ ("  " ++) . show <$> ts
-  putStrLn ""
-  printSetLn $ fromList (t0:ts)
-  putStrLn ""
-  printSet $ states automaton
+main = print intexample
