@@ -173,7 +173,8 @@ convertToDFA m = generateFSMFn (label m ++ "_deter")
 
 
 -- | Recursive transition generator for a pairing operation of two automata.
-generatePairTrans :: (Ord a, Ord b) => BoolRelation -> NewTransGen (a, b) (FSM a, FSM b)
+generatePairTrans :: (Ord a, Ord b) => BoolRelation -- ^ The pairing operation.
+                                    -> NewTransGen (a, b) (FSM a, FSM b)
 generatePairTrans op = generateTransFn gnt
   where gnt css stack (ma, mb) = (\tp -> T css (aFromTransPair tp) (pairEndingStates op tp)) <<$>> cstp
           where (sta, stb) = fsmTransFromPairState css (ma, mb)
@@ -182,21 +183,15 @@ generatePairTrans op = generateTransFn gnt
                   where cfind c = find $ (== c) . symbol
 
 -- | Constructs two automata with a pairing operation using a pair of two automata.
-generatePairFSM :: (Ord a, Ord b) => String                            -- ^ The label separator.
-                                  -> BoolRelation                      -- ^ The pairing operation, for example (&&) or (||).
-                                  -> (FSM a, FSM b)                    -- ^ The pair of two automata.
+generatePairFSM :: (Ord a, Ord b) => String         -- ^ The label separator.
+                                  -> BoolRelation   -- ^ The pairing operation, for example (&&) or (||).
+                                  -> (FSM a, FSM b) -- ^ The pair of two automata.
                                   -> FSM (a, b)
 generatePairFSM lsep op (ma, mb) =
   generateFSMFn (label ma ++ lsep ++ label mb)
                 (pairStates True op ( fromJust $ fsmInitialState ma
                                     , fromJust $ fsmInitialState mb ))
                 (generatePairTrans op) (ma, mb)
-
-
-
-
-intersecTrans :: (Ord a, Ord b) => NewTransGen (a, b) (FSM a, FSM b)
-intersecTrans = generatePairTrans (&&)
 
 
 
