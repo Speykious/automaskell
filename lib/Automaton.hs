@@ -218,3 +218,18 @@ ma <^> mb = generatePairFSM "_xor_" (/=) (ma, mb)
 -- Both have to be deterministic and complete. However, the function doesn't check.
 (<=>) :: (Ord a, Ord b) => FSM a -> FSM b -> FSM (a, b)
 ma <=> mb = generatePairFSM "_eq_" (==) (ma, mb)
+
+instance Ord a => Semigroup (FSM a) where
+  ma <> mb = FSM (label ma ++ "_dot_" ++ label mb) (ta <> tn2s <> ot2s <> t12s)
+    where ta = transitions ma
+          tf1s = DS.filter ((`DS.member` fsmFinalStates ma) . transEnd) ta
+          ti2s = fsmInitialStates mb <>>=> (`fsmTransFromState` mb)
+          tn2s = (\(T (S l (_, f)) sym sb) -> T (S l (False, f)) sym sb) <<$>> ti2s
+          ot2s = DS.filter (not . (`DS.member` ti2s)) $ transitions mb
+          t12s = startingStates tn2s <>>=> (\s -> (\(T sa sym _) -> T sa sym s) <<$>> tf1s)
+
+star :: Ord a => FSM a -> FSM a
+star ma = FSM (label ma ++ "_star") (ta <> nts)
+  where ta = transitions ma
+        tfs = DS.filter ((`DS.member` fsmFinalStates ma) . transEnd) ta
+        nts = fsmInitialStates ma <>>=> (\s -> (\(T sa sym _) -> T sa sym s) <<$>> tfs)

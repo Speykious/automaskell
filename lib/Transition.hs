@@ -33,6 +33,9 @@ transFromState s = DS.filter $ (== s) . transStart
 transWithLabel :: Char -> Set (T a) -> Set (T a)
 transWithLabel c = DS.filter $ (== c) . symbol
 
+startingStates :: Ord a => Set (T a) -> Set (S a)
+startingStates = DS.map transStart
+
 -- | Get all ending states of transitions.
 endingStates :: Ord a => Set (T a) -> Set (S a)
 endingStates = DS.map transEnd

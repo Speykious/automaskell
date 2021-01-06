@@ -12,9 +12,16 @@ import Data.Foldable (find)
 import Set (Set, fromList)
 import qualified Set as DS
 
+type A = Integer
+
 s0 = S 0 (False, False)
 s1 = S 1 (False, True)
 s2 = S 2 (True, False)
+
+s10 = S 10 (True, True)
+s11 = S 11 (False, True)
+s12 = S 12 (False, False)
+s13 = S 13 (False, False)
 
 ta = T s2 'b' s1
 tb = T s0 'a' s2
@@ -24,7 +31,12 @@ ts = [ T s0 'b' s1
      , T s1 'b' s2
      , T s2 'a' s0 ]
 
-type A = Integer
+tt = [ T s10 'z' s11
+     , T s10 'z' s12
+     , T s11 'x' s12
+     , T s11 'z' s13
+     , T s12 'y' s13 ]
+
 
 auto :: FSM A
 auto = fsmFromList "auto" (ta:ts)
@@ -53,7 +65,18 @@ example2 = fsmFromList "example2" [ T e1 'b' e2
                                   , T e3 'b' e2
                                   , T e3 'a' e3 ]
 
+examplete :: FSM A
 examplete = complete (-1) "ab" example2
+
+
+
+example3 :: FSM A
+example3 = fsmFromList "example3" tt
+
+exatenation :: FSM A
+exatenation = example1 <> example3
+
+
 
 main :: IO ()
 main = do dotPDF (example1 <&> examplete)
